@@ -33,6 +33,12 @@ class User(AbstractUser):
         default=USER,
         help_text='Уровень доступа пользователя'
     )
+    confirmation_code = models.CharField(
+        'Код подтверждения',
+        max_length=100,
+        blank=True,
+        null=True
+    )
 
     class Meta:
         verbose_name = 'Пользователь'
