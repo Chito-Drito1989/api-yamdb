@@ -20,18 +20,12 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'rest_framework',
-    'reviews',
-    'api',
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework_simplejwt',
-    'users',
     'reviews',
     'api',
-    'api.apps.ApiConfig',
-    'rest_framework',
-    'users.apps.UsersConfig',
+    'users',
 ]
 
 REST_FRAMEWORK = {
