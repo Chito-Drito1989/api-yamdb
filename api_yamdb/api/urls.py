@@ -2,6 +2,9 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 
 from .views import (
+    signup,
+    TokenObtainView,
+    UserViewSet,
     CategoryViewSet,
     GenreViewSet,
     TitleViewSet,
@@ -9,12 +12,18 @@ from .views import (
     CommentViewSet,
 )
 
-router = DefaultRouter()
-router.register('categories', CategoryViewSet, basename='categories')
-router.register('genres', GenreViewSet, basename='genres')
-router.register('titles', TitleViewSet, basename='titles')
+app_name = 'api'
+
+router_v1 = DefaultRouter()
+router_v1.register('users', UserViewSet, basename='users')
+router_v1.register('categories', CategoryViewSet, basename='categories')
+router_v1.register('genres', GenreViewSet, basename='genres')
+router_v1.register('titles', TitleViewSet, basename='titles')
 
 urlpatterns = [
+    path('v1/auth/signup/', signup, name='signup'),
+    path('v1/auth/token/', TokenObtainView.as_view(), name='token_obtain'),
+    # Отзывы по произведению
     path(
         'v1/titles/<int:title_id>/reviews/',
         ReviewViewSet.as_view({'get': 'list', 'post': 'create'}),
@@ -29,6 +38,7 @@ urlpatterns = [
         }),
         name='review-detail',
     ),
+    # Комментарии к отзыву
     path(
         'v1/titles/<int:title_id>/reviews/<int:review_id>/comments/',
         CommentViewSet.as_view({'get': 'list', 'post': 'create'}),
@@ -43,5 +53,5 @@ urlpatterns = [
         }),
         name='comment-detail',
     ),
-    path('v1/', include(router.urls)),
+    path('v1/', include(router_v1.urls)),
 ]

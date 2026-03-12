@@ -1,6 +1,34 @@
 from django.db.models import Avg
+from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 from reviews.models import Category, Genre, Title, Review, Comment
+from users.models import User
+
+
+class SignUpSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('username', 'email')
+
+
+class TokenSerializer(serializers.Serializer):
+    username = serializers.CharField(required=True)
+    confirmation_code = serializers.CharField(required=True)
+
+    def validate(self, data):
+        user = get_object_or_404(User, username=data['username'])
+        if data['confirmation_code'] != user.confirmation_code:
+            raise serializers.ValidationError('Неверный код подтверждения')
+        return data
+
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = (
+            'username', 'email', 'first_name',
+            'last_name', 'bio', 'role'
+        )
 
 
 class CategorySerializer(serializers.ModelSerializer):
