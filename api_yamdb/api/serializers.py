@@ -16,3 +16,12 @@ class TokenSerializer(serializers.Serializer):
         if data['confirmation_code'] != user.confirmation_code:
             raise serializers.ValidationError("Неверный код подтверждения")
         return data
+
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = (
+            'username', 'email', 'first_name',
+            'last_name', 'bio', 'role'
+        )
