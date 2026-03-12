@@ -1,6 +1,16 @@
 from rest_framework.permissions import BasePermission, SAFE_METHODS
 
 
+class IsAdmin(BasePermission):
+    """Разрешает доступ только администратору."""
+
+    def has_permission(self, request, view):
+        return (
+            request.user.is_authenticated
+            and (getattr(request.user, 'is_admin', False) or request.user.is_superuser)
+        )
+
+
 class IsAdminOrReadOnly(BasePermission):
     """Только админ может изменять; остальные — только чтение."""
 
