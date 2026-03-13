@@ -44,7 +44,9 @@ class Command(BaseCommand):
                     title = Title.objects.get(id=row['title_id'])
                     genre = Genre.objects.get(id=row['genre_id'])
                     title.genre.add(genre)
-                except:
+                except Exception:
                     pass
 
-        self.stdout.write(self.style.SUCCESS('✅ Все данные из CSV успешно загружены!'))
+        self.stdout.write(
+            self.style.SUCCESS('✅ Все данные из CSV успешно загружены!')
+        )

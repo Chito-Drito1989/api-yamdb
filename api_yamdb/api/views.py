@@ -71,7 +71,9 @@ class TokenObtainView(APIView):
     def post(self, request):
         serializer = TokenSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        user = get_object_or_404(User, username=serializer.validated_data['username'])
+        user = get_object_or_404(
+            User, username=serializer.validated_data['username']
+        )
         refresh = RefreshToken.for_user(user)
         return Response(
             {'token': str(refresh.access_token)},
@@ -101,7 +103,8 @@ class UserViewSet(viewsets.ModelViewSet):
             return Response(serializer.data, status=status.HTTP_200_OK)
         serializer = UserSerializer(user, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
-        serializer.save(role=user.role)  # пользователь не может сам менять себе роль
+        # Пользователь не может сам менять себе роль
+        serializer.save(role=user.role)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -171,7 +174,10 @@ class TitleViewSet(viewsets.ModelViewSet):
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
-    """Отзывы по произведению. Список/детали — без токена; создание — авторизованный; правка/удаление — автор, модератор или админ."""
+    """
+    Отзывы по произведению. Список/детали — без токена; создание —
+    авторизованный; правка/удаление — автор, модератор или админ.
+    """
     serializer_class = ReviewSerializer
     permission_classes = (IsAuthorOrModeratorOrAdmin,)
     http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
@@ -194,8 +200,10 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         title = get_object_or_404(Title, pk=self.kwargs['title_id'])
-        # запрет второго отзыва от того же пользователя на то же произведение
-        if Review.objects.filter(title=title, author=self.request.user).exists():
+        # Запрет второго отзыва от того же пользователя на то же произведение
+        if Review.objects.filter(
+            title=title, author=self.request.user
+        ).exists():
             raise ValidationError(
                 {'detail': 'Вы уже оставили отзыв на это произведение.'}
             )
@@ -203,7 +211,10 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
 
 class CommentViewSet(viewsets.ModelViewSet):
-    """Комментарии к отзыву. Аналогично отзывам: чтение без токена; создание — авторизованный; правка/удаление — автор, модератор или админ."""
+    """
+    Комментарии к отзыву. Аналогично отзывам: чтение без токена;
+    создание — авторизованный; правка/удаление — автор, модератор или админ.
+    """
     serializer_class = CommentSerializer
     permission_classes = (IsAuthorOrModeratorOrAdmin,)
     http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
@@ -211,7 +222,9 @@ class CommentViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         title_id = self.kwargs.get('title_id')
         review_id = self.kwargs.get('review_id')
-        return Comment.objects.filter(review_id=review_id, review__title_id=title_id)
+        return Comment.objects.filter(
+            review_id=review_id, review__title_id=title_id
+        )
 
     def get_permissions(self):
         if self.action in ('list', 'retrieve'):
