@@ -1,3 +1,4 @@
+from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
@@ -9,6 +10,17 @@ class SignUpSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('username', 'email')
+        extra_kwargs = {
+            'email': {'validators': []},
+            'username': {'validators': [UnicodeUsernameValidator()]},
+        }
+
+    def validate_username(self, value):
+        if value == 'me':
+            raise serializers.ValidationError(
+                'Использовать имя "me" в качестве username запрещено.'
+            )
+        return value
 
 
 class TokenSerializer(serializers.Serializer):
@@ -34,18 +46,32 @@ class UserSerializer(serializers.ModelSerializer):
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
-        fields = ('id', 'name', 'slug')
+        fields = ('name', 'slug')
 
 
 class GenreSerializer(serializers.ModelSerializer):
     class Meta:
         model = Genre
-        fields = ('id', 'name', 'slug')
+        fields = ('name', 'slug')
+
+
+class CategoryShortSerializer(serializers.ModelSerializer):
+    """Только name и slug для вложенного отображения в Title."""
+    class Meta:
+        model = Category
+        fields = ('name', 'slug')
+
+
+class GenreShortSerializer(serializers.ModelSerializer):
+    """Только name и slug для вложенного отображения в Title."""
+    class Meta:
+        model = Genre
+        fields = ('name', 'slug')
 
 
 class TitleSerializer(serializers.ModelSerializer):
-    category = CategorySerializer(read_only=True)
-    genre = GenreSerializer(many=True, read_only=True)
+    category = CategoryShortSerializer(read_only=True)
+    genre = GenreShortSerializer(many=True, read_only=True)
     rating = serializers.SerializerMethodField()
 
     class Meta:

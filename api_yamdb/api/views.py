@@ -34,10 +34,26 @@ def signup(request):
     username = serializer.validated_data.get('username')
     email = serializer.validated_data.get('email')
 
-    user, created = User.objects.get_or_create(username=username, email=email)
+    user_by_email = User.objects.filter(email=email).first()
+    user_by_username = User.objects.filter(username=username).first()
+    if user_by_email and user_by_email.username != username:
+        return Response(
+            {'detail': 'Пользователь с таким email уже зарегистрирован.'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    if user_by_username and user_by_username.email != email:
+        return Response(
+            {'detail': 'Пользователь с таким username уже зарегистрирован.'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    user = user_by_email or user_by_username
+    if not user:
+        user = User.objects.create(username=username, email=email)
+
     confirmation_code = default_token_generator.make_token(user)
     user.confirmation_code = confirmation_code
-    user.save()
+    user.save(update_fields=['confirmation_code'])
 
     send_mail(
         'Код подтверждения YaMDb',
@@ -90,24 +106,63 @@ class UserViewSet(viewsets.ModelViewSet):
 
 
 class CategoryViewSet(viewsets.ModelViewSet):
-    queryset = Category.objects.all()
+    queryset = Category.objects.all().order_by('id')
     serializer_class = CategorySerializer
     permission_classes = (IsAdminOrReadOnly,)
     lookup_field = 'slug'
     lookup_url_kwarg = 'slug'
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('name',)
+
+    def retrieve(self, request, *args, **kwargs):
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def update(self, request, *args, **kwargs):
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def partial_update(self, request, *args, **kwargs):
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
 class GenreViewSet(viewsets.ModelViewSet):
-    queryset = Genre.objects.all()
+    queryset = Genre.objects.all().order_by('id')
     serializer_class = GenreSerializer
     permission_classes = (IsAdminOrReadOnly,)
     lookup_field = 'slug'
     lookup_url_kwarg = 'slug'
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('name',)
+
+    def retrieve(self, request, *args, **kwargs):
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def update(self, request, *args, **kwargs):
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def partial_update(self, request, *args, **kwargs):
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
 class TitleViewSet(viewsets.ModelViewSet):
-    queryset = Title.objects.all()
+    queryset = Title.objects.all().order_by('id')
     permission_classes = (IsAdminOrReadOnly,)
+    http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        category = self.request.query_params.get('category')
+        genre = self.request.query_params.get('genre')
+        year = self.request.query_params.get('year')
+        name = self.request.query_params.get('name')
+        if category:
+            qs = qs.filter(category__slug=category)
+        if genre:
+            qs = qs.filter(genre__slug=genre)
+        if year:
+            qs = qs.filter(year=year)
+        if name:
+            qs = qs.filter(name__icontains=name)
+        return qs.distinct()
 
     def get_serializer_class(self):
         if self.action in ('create', 'update', 'partial_update'):
