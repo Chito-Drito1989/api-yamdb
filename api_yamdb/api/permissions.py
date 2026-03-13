@@ -5,10 +5,10 @@ class IsAdmin(BasePermission):
     """Разрешает доступ только администратору."""
 
     def has_permission(self, request, view):
-        return (
-            request.user.is_authenticated
-            and (getattr(request.user, 'is_admin', False) or request.user.is_superuser)
-        )
+        if not request.user.is_authenticated:
+            return False
+        is_admin = getattr(request.user, 'is_admin', False)
+        return is_admin or request.user.is_superuser
 
 
 class IsAdminOrReadOnly(BasePermission):
