@@ -27,7 +27,7 @@ SimpleJWT (для работы с JWT-токенами)
 Установка и запуск
 Клонируйте репозиторий:
 
-git clone https://github.com/your_username/api_yamdb.git
+git clone https://github.com/Chito-Drito1989/api-yamdb.git
 cd api_yamdb
 
 Создайте и активируйте виртуальное окружение:
@@ -55,10 +55,10 @@ http://127.0.0.1:8000/redoc/
 Авторство
 Проект разработан в рамках учебного курса. Над проектом работали:
 
-Тимлид: [] — [ссылка на профиль]
+Тимлид: [Nazar Tomaily]
 
-Разработчик 1: [] — [ссылка на профиль] (User, Auth)
+Разработчик 1: [Илья Абакунчик] — [https://github.com/Kumalaslark] (User, Auth)
 
-Разработчик 2: [] — [ссылка на профиль] (Titles, Categories, Genres)
+Разработчик 2: [Вадим Гусейнов] — [https://github.com/JuliaDJ1] (Titles, Categories, Genres)
 
-Разработчик 3: [] — [ссылка на профиль] (Reviews, Comments, Rating)
+Разработчик 3: [Nazar Tomaily] — [(https://github.com/Chito-Drito1989)] (Reviews, Comments, Rating)
