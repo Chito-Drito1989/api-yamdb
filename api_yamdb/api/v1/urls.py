@@ -43,7 +43,8 @@ urlpatterns = [
         name='comment-list',
     ),
     path(
-        'titles/<int:title_id>/reviews/<int:review_id>/comments/<int:comment_id>/',
+        'titles/<int:title_id>/reviews/<int:review_id>/'
+        'comments/<int:comment_id>/',
         CommentViewSet.as_view({
             'get': 'retrieve',
             'patch': 'partial_update',

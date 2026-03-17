@@ -8,18 +8,26 @@ from users.validators import validate_username_not_forbidden
 
 
 class SignUpSerializer(serializers.Serializer):
-    """Сериализатор регистрации: только валидация, создание через get_or_create во вью."""
+    """
+    Сериализатор регистрации: только валидация, создание через
+    get_or_create во вью.
+    """
 
     username = serializers.CharField(
         max_length=User.USERNAME_MAX_LENGTH,
         required=True,
-        validators=[UnicodeUsernameValidator(), validate_username_not_forbidden],
+        validators=[
+            UnicodeUsernameValidator(),
+            validate_username_not_forbidden,
+        ],
     )
     email = serializers.EmailField(required=True, max_length=254)
 
     def validate(self, data):
         user_by_email = User.objects.filter(email=data['email']).first()
-        user_by_username = User.objects.filter(username=data['username']).first()
+        user_by_username = User.objects.filter(
+            username=data['username']
+        ).first()
         if user_by_email != user_by_username:
             error_msg = {}
             if user_by_email is not None:
@@ -34,14 +42,19 @@ class TokenSerializer(serializers.Serializer):
     username = serializers.CharField(
         max_length=User.USERNAME_MAX_LENGTH,
         required=True,
-        validators=[UnicodeUsernameValidator(), validate_username_not_forbidden],
+        validators=[
+            UnicodeUsernameValidator(),
+            validate_username_not_forbidden,
+        ],
     )
     confirmation_code = serializers.CharField(required=True)
 
     def validate(self, data):
         from django.shortcuts import get_object_or_404
         user = get_object_or_404(User, username=data['username'])
-        if not default_token_generator.check_token(user, data['confirmation_code']):
+        if not default_token_generator.check_token(
+            user, data['confirmation_code']
+        ):
             raise serializers.ValidationError('Неверный код подтверждения')
         return data
 
@@ -95,7 +108,9 @@ class TitleCreateUpdateSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'year', 'description', 'genre', 'category')
 
     def to_representation(self, instance):
-        """Возвращаем полный формат как в ТЗ: category и genre — объекты, rating — число."""
+        """
+        Полный формат как в ТЗ: category и genre — объекты, rating — число.
+        """
         serializer = TitleSerializer(instance, context=self.context)
         return serializer.data
 

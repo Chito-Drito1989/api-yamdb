@@ -40,7 +40,10 @@ class IsAuthorOrModeratorOrAdmin(BasePermission):
 
 
 class IsAuthorOrModeratorOrAdminOrReadOnly(BasePermission):
-    """Чтение — всем; создание — авторизованным; правка/удаление — автор, модератор или админ."""
+    """
+    Чтение — всем; создание — авторизованным; правка/удаление —
+    автор, модератор или админ.
+    """
 
     def has_permission(self, request, view):
         if request.method in SAFE_METHODS:
