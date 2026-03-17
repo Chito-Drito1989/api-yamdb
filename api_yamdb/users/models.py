@@ -40,5 +40,18 @@ class User(AbstractUser):
         verbose_name_plural = 'Пользователи'
         ordering = ('username',)
 
+    @property
+    def is_admin(self):
+        """Администратор по роли, staff или superuser."""
+        return (
+            self.role == RoleChoices.ADMIN
+            or self.is_superuser
+            or self.is_staff
+        )
+
+    @property
+    def is_moderator(self):
+        return self.role == RoleChoices.MODERATOR
+
     def __str__(self):
         return self.username
