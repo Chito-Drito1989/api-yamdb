@@ -10,6 +10,8 @@ class RoleChoices(models.TextChoices):
 
 
 class User(AbstractUser):
+    USERNAME_MAX_LENGTH = 150
+
     username = models.CharField(
         'Имя пользователя',
         max_length=150,
