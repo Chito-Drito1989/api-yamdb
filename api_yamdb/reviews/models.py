@@ -20,8 +20,12 @@ def validate_year(value):
 class Category(models.Model):
     """Категория произведения."""
 
-    name = models.CharField(max_length=NAME_MAX_LENGTH, verbose_name='Наименование')
-    slug = models.SlugField(unique=True, max_length=SLUG_MAX_LENGTH, verbose_name='Слаг')
+    name = models.CharField(
+        max_length=NAME_MAX_LENGTH, verbose_name='Наименование'
+    )
+    slug = models.SlugField(
+        unique=True, max_length=SLUG_MAX_LENGTH, verbose_name='Слаг'
+    )
 
     class Meta:
         verbose_name = 'Категория'
@@ -35,8 +39,12 @@ class Category(models.Model):
 class Genre(models.Model):
     """Жанр произведения."""
 
-    name = models.CharField(max_length=NAME_MAX_LENGTH, verbose_name='Наименование')
-    slug = models.SlugField(unique=True, max_length=SLUG_MAX_LENGTH, verbose_name='Слаг')
+    name = models.CharField(
+        max_length=NAME_MAX_LENGTH, verbose_name='Наименование'
+    )
+    slug = models.SlugField(
+        unique=True, max_length=SLUG_MAX_LENGTH, verbose_name='Слаг'
+    )
 
     class Meta:
         verbose_name = 'Жанр'
@@ -50,7 +58,9 @@ class Genre(models.Model):
 class Title(models.Model):
     """Произведение: фильм, книга или музыка."""
 
-    name = models.CharField(max_length=NAME_MAX_LENGTH, verbose_name='Название')
+    name = models.CharField(
+        max_length=NAME_MAX_LENGTH, verbose_name='Название'
+    )
     year = models.SmallIntegerField(validators=[validate_year],
                                     verbose_name='Год')
     description = models.TextField(blank=True, null=True,

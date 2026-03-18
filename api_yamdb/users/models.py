@@ -20,7 +20,10 @@ class User(AbstractUser):
         'Имя пользователя',
         max_length=USERNAME_MAX_LENGTH,
         unique=True,
-        validators=[UnicodeUsernameValidator(), validate_username_not_forbidden],
+        validators=[
+            UnicodeUsernameValidator(),
+            validate_username_not_forbidden,
+        ],
     )
     email = models.EmailField(
         'Электронная почта',

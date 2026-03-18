@@ -14,7 +14,11 @@ from reviews.models import Category, Genre, Title, Review
 from users.models import User
 
 from .filters import TitleFilter
-from .permissions import IsAdmin, IsAdminOrReadOnly, IsAuthorOrModeratorOrAdminOrReadOnly
+from .permissions import (
+    IsAdmin,
+    IsAdminOrReadOnly,
+    IsAuthorOrModeratorOrAdminOrReadOnly,
+)
 from .serializers import (
     SignUpSerializer,
     TokenSerializer,
