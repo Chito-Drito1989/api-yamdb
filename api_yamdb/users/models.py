@@ -4,6 +4,10 @@ from django.db import models
 
 from users.validators import validate_username_not_forbidden
 
+USERNAME_MAX_LENGTH = 150
+ROLE_MAX_LENGTH = 20
+EMAIL_MAX_LENGTH = 254
+
 
 class RoleChoices(models.TextChoices):
     USER = 'user', 'Пользователь'
@@ -12,9 +16,6 @@ class RoleChoices(models.TextChoices):
 
 
 class User(AbstractUser):
-    USERNAME_MAX_LENGTH = 150
-    ROLE_MAX_LENGTH = 20
-
     username = models.CharField(
         'Имя пользователя',
         max_length=USERNAME_MAX_LENGTH,
@@ -24,6 +25,7 @@ class User(AbstractUser):
     email = models.EmailField(
         'Электронная почта',
         unique=True,
+        max_length=EMAIL_MAX_LENGTH,
     )
     bio = models.TextField(
         'Биография',
