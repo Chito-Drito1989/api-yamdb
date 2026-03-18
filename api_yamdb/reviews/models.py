@@ -95,7 +95,6 @@ class Review(models.Model):
                                     name='unique_review')
         ]
         ordering = ('-pub_date',)
-    """Комментарий пользователя к отзыву."""
 
     def __str__(self):
         return f'{self.author.username} — {self.title.name}'

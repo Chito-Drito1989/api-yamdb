@@ -1,5 +1,6 @@
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.auth.validators import UnicodeUsernameValidator
+from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
 from reviews.models import Category, Genre, Title, Review, Comment
@@ -50,7 +51,6 @@ class TokenSerializer(serializers.Serializer):
     confirmation_code = serializers.CharField(required=True)
 
     def validate(self, data):
-        from django.shortcuts import get_object_or_404
         user = get_object_or_404(User, username=data['username'])
         if not default_token_generator.check_token(
             user, data['confirmation_code']
@@ -88,7 +88,8 @@ class TitleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Title
         fields = (
-            'id', 'name', 'year', 'rating', 'description', 'genre', 'category',
+            'id', 'name', 'year', 'rating', 'description',
+            'genre', 'category',
         )
 
 
