@@ -2,22 +2,30 @@ from rest_framework import filters
 
 
 class TitleFilter(filters.BaseFilterBackend):
-    """Кастомный фильтр произведений по полям category, genre, year, name."""
+    """
+    Кастомный фильтр произведений.
+    Поля query-параметров: category, genre, year, name.
+    """
 
-    filter_fields = ('category', 'genre', 'year', 'name')
+    FILTER_PARAM_TO_LOOKUP = {
+        'category': ('category__slug', 'exact'),
+        'genre': ('genre__slug', 'exact'),
+        'year': ('year', 'exact'),
+        'name': ('name', 'icontains'),
+    }
 
     def filter_queryset(self, request, queryset, view):
-        category = request.query_params.get('category')
-        genre = request.query_params.get('genre')
-        year = request.query_params.get('year')
-        name = request.query_params.get('name')
-
-        if category:
-            queryset = queryset.filter(category__slug=category)
-        if genre:
-            queryset = queryset.filter(genre__slug=genre)
-        if year:
-            queryset = queryset.filter(year=year)
-        if name:
-            queryset = queryset.filter(name__icontains=name)
+        for param, (lookup, kind) in self.FILTER_PARAM_TO_LOOKUP.items():
+            value = request.query_params.get(param)
+            if value is None or value == '':
+                continue
+            if param == 'year':
+                try:
+                    value = int(value)
+                except (TypeError, ValueError):
+                    continue
+            if kind == 'exact':
+                queryset = queryset.filter(**{lookup: value})
+            else:
+                queryset = queryset.filter(**{f'{lookup}__icontains': value})
         return queryset.distinct()

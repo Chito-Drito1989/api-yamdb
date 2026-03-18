@@ -1,5 +1,7 @@
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.auth.validators import UnicodeUsernameValidator
+from django.db.models import Avg
+from django.db.models.functions import Round
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
@@ -59,6 +61,7 @@ class TokenSerializer(serializers.Serializer):
             user, data['confirmation_code']
         ):
             raise serializers.ValidationError('Неверный код подтверждения')
+        data['user'] = user
         return data
 
 
@@ -114,9 +117,15 @@ class TitleCreateUpdateSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         """
         Полный формат как в ТЗ: category и genre — объекты, rating — число.
+        Рейтинг подтягивается через annotate (после create/update у объекта
+        нет поля rating).
         """
-        serializer = TitleSerializer(instance, context=self.context)
-        return serializer.data
+        title = (
+            Title.objects.filter(pk=instance.pk)
+            .annotate(rating=Round(Avg('reviews__score')))
+            .first()
+        )
+        return TitleSerializer(title, context=self.context).data
 
 
 class ReviewSerializer(serializers.ModelSerializer):

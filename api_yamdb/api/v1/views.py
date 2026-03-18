@@ -60,9 +60,7 @@ class TokenObtainView(APIView):
     def post(self, request):
         serializer = TokenSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        user = get_object_or_404(
-            User, username=serializer.validated_data['username'],
-        )
+        user = serializer.validated_data['user']
         refresh = RefreshToken.for_user(user)
         return Response(
             {'token': str(refresh.access_token)},
