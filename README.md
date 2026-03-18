@@ -1,64 +1,77 @@
-API YaMDb
+# API YaMDb
 
-Описание проекта:
+## Описание проекта
 
-Проект YaMDb собирает отзывы пользователей на различные произведения: фильмы, книги и музыку. Сами произведения не хранятся в YaMDb (здесь нельзя посмотреть фильм или послушать музыку), пользователи оставляют к ним текстовые отзывы и ставят оценку (рейтинг).
+Проект YaMDb собирает отзывы пользователей на произведения (фильмы, книги, музыку). Сами произведения в сервисе не хранятся — только метаданные, категории, жанры, оценки и текстовые отзывы с комментариями.
 
-Произведения делятся по категориям и жанрам. Из пользовательских оценок формируется усредненный рейтинг произведения.
+## Стек технологий
 
-Ключевые возможности
-Аутентификация и пользователи: Самостоятельная регистрация по email с получением кода подтверждения, JWT-авторизация, управление профилем.
+- Python 3.9+
+- Django 5.1
+- Django REST Framework 3.15
+- djangorestframework-simplejwt (JWT)
+- SQLite (по умолчанию)
 
-Каталог: Управление категориями, жанрами и произведениями (только для администраторов).
+## Установка и запуск
 
-Контент: Возможность оставлять отзывы и комментарии, ставить оценки от 1 до 10.
-
-Роли: Разграничение прав доступа (Аноним, User, Moderator, Admin).
-
-Стек технологий
-Python 3.9+
-
-Django 3.2
-
-Django REST Framework
-
-SimpleJWT (для работы с JWT-токенами)
-
-Установка и запуск
-Клонируйте репозиторий:
-
-git clone https://github.com/Chito-Drito1989/api-yamdb.git
-cd api_yamdb
-
-Создайте и активируйте виртуальное окружение:
-
+```bash
+git clone <url-репозитория>
+cd api-yamdb/api_yamdb
 python -m venv venv
-source venv/bin/activate  # Для Windows: venv\Scripts\activate
-Установите зависимости:
-
-pip install -r requirements.txt
-Выполните миграции:
-
+# Windows: venv\Scripts\activate
+# Linux/macOS: source venv/bin/activate
+pip install -r ../requirements.txt
 python manage.py migrate
-Запустите проект:
-
 python manage.py runserver
+```
 
-Наполнение базы данных (импорт из CSV):
+Базовый URL API: `http://127.0.0.1:8000/api/v1/`
 
+## Наполнение БД из CSV
+
+CSV-файлы размещаются в каталоге `api_yamdb/static/data/` (например: `category.csv`, `genre.csv`, `titles.csv` и т.д.).
+
+После миграций выполните:
+
+```bash
 python manage.py import_csv
+```
 
-Документация API
-После запуска проекта документация API доступна по адресу:
-http://127.0.0.1:8000/redoc/
+Команда импортирует данные из указанных файлов в соответствующие модели.
 
-Авторство
-Проект разработан в рамках учебного курса. Над проектом работали:
+## Документация API
 
-Тимлид: [Nazar Tomaily]
+После запуска сервера: **http://127.0.0.1:8000/redoc/**
 
-Разработчик 1: [Илья Абакунчик] — [https://github.com/Kumalaslark] (User, Auth)
+## Примеры запросов
 
-Разработчик 2: [Вадим Гусейнов] — [https://github.com/JuliaDJ1] (Titles, Categories, Genres)
+**Регистрация**
 
-Разработчик 3: [Nazar Tomaily] — [(https://github.com/Chito-Drito1989)] (Reviews, Comments, Rating)
+`POST /api/v1/auth/signup/`
+
+```json
+{"email": "user@example.com", "username": "user1"}
+```
+
+Ответ `200`: в письме (папка `sent_emails/`) — код подтверждения.
+
+**Получение JWT**
+
+`POST /api/v1/auth/token/`
+
+```json
+{"username": "user1", "confirmation_code": "<код из письма>"}
+```
+
+Ответ: `{"token": "eyJ..."}`
+
+**Список произведений с фильтрами**
+
+`GET /api/v1/titles/?category=movies&genre=drama&year=2020&name=книга`
+
+## Авторство
+
+Проект выполнен в рамках учебного курса.
+
+- Тимлид: Nazar Tomaily
+- Разработчики: Илья Абакунчик (User, Auth), Вадим Гусейнов (Titles, Categories, Genres), Nazar Tomaily (Reviews, Comments, Rating)
