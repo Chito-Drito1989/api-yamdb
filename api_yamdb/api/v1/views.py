@@ -14,11 +14,7 @@ from reviews.models import Category, Genre, Title, Review
 from users.models import User
 
 from .filters import TitleFilter
-from .permissions import (
-    IsAdmin,
-    IsAdminOrReadOnly,
-    IsAuthorOrModeratorOrAdminOrReadOnly,
-)
+from .permissions import IsAdmin, IsAdminOrReadOnly, IsAuthorOrModeratorOrAdminOrReadOnly
 from .serializers import (
     SignUpSerializer,
     TokenSerializer,
@@ -129,11 +125,9 @@ class TitleViewSet(viewsets.ModelViewSet):
     filter_backends = (TitleFilter, filters.SearchFilter)
     search_fields = ('name',)
     http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
-
-    def get_queryset(self):
-        return Title.objects.all().order_by('id').annotate(
-            rating=Round(Avg('reviews__score')),
-        )
+    queryset = Title.objects.all().order_by('id').annotate(
+        rating=Round(Avg('reviews__score')),
+    )
 
     def get_serializer_class(self):
         if self.action in ('create', 'update', 'partial_update'):
@@ -153,12 +147,6 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return self.get_title().reviews.all()
-
-    def get_serializer_context(self):
-        context = super().get_serializer_context()
-        if 'title_id' in self.kwargs:
-            context['title'] = self.get_title()
-        return context
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user, title=self.get_title())

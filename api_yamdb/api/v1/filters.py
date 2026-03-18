@@ -2,7 +2,9 @@ from rest_framework import filters
 
 
 class TitleFilter(filters.BaseFilterBackend):
-    """Фильтр произведений по category, genre, year, name."""
+    """Кастомный фильтр произведений по полям category, genre, year, name."""
+
+    filter_fields = ('category', 'genre', 'year', 'name')
 
     def filter_queryset(self, request, queryset, view):
         category = request.query_params.get('category')

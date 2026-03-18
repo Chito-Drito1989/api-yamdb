@@ -4,21 +4,24 @@ from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.core.exceptions import ValidationError
 
+NAME_MAX_LENGTH = 256
+SLUG_MAX_LENGTH = 50
+SCORE_MIN = 1
+SCORE_MAX = 10
+
 
 def validate_year(value):
     """Проверка, что год не превышает текущий."""
-
     current_year = dt.date.today().year
     if value > current_year:
         raise ValidationError(f'Год {value} больше текущего {current_year}!')
-    return value
 
 
 class Category(models.Model):
     """Категория произведения."""
 
-    name = models.CharField(max_length=256, verbose_name='Наименование')
-    slug = models.SlugField(unique=True, max_length=50, verbose_name='Слаг')
+    name = models.CharField(max_length=NAME_MAX_LENGTH, verbose_name='Наименование')
+    slug = models.SlugField(unique=True, max_length=SLUG_MAX_LENGTH, verbose_name='Слаг')
 
     class Meta:
         verbose_name = 'Категория'
@@ -32,8 +35,8 @@ class Category(models.Model):
 class Genre(models.Model):
     """Жанр произведения."""
 
-    name = models.CharField(max_length=256, verbose_name='Наименование')
-    slug = models.SlugField(unique=True, max_length=50, verbose_name='Слаг')
+    name = models.CharField(max_length=NAME_MAX_LENGTH, verbose_name='Наименование')
+    slug = models.SlugField(unique=True, max_length=SLUG_MAX_LENGTH, verbose_name='Слаг')
 
     class Meta:
         verbose_name = 'Жанр'
@@ -47,7 +50,7 @@ class Genre(models.Model):
 class Title(models.Model):
     """Произведение: фильм, книга или музыка."""
 
-    name = models.CharField(max_length=256, verbose_name='Название')
+    name = models.CharField(max_length=NAME_MAX_LENGTH, verbose_name='Название')
     year = models.SmallIntegerField(validators=[validate_year],
                                     verbose_name='Год')
     description = models.TextField(blank=True, null=True,
@@ -81,7 +84,10 @@ class Review(models.Model):
         related_name='reviews', verbose_name='Автор'
     )
     score = models.PositiveSmallIntegerField(
-        validators=[MinValueValidator(1), MaxValueValidator(10)],
+        validators=[
+            MinValueValidator(SCORE_MIN),
+            MaxValueValidator(SCORE_MAX),
+        ],
         verbose_name='Оценка'
     )
     pub_date = models.DateTimeField(auto_now_add=True,
@@ -95,7 +101,6 @@ class Review(models.Model):
                                     name='unique_review')
         ]
         ordering = ('-pub_date',)
-    """Комментарий пользователя к отзыву."""
 
     def __str__(self):
         return f'{self.author.username} — {self.title.name}'

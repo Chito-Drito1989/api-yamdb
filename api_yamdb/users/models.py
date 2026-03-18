@@ -2,6 +2,12 @@ from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.db import models
 
+from users.validators import validate_username_not_forbidden
+
+USERNAME_MAX_LENGTH = 150
+ROLE_MAX_LENGTH = 20
+EMAIL_MAX_LENGTH = 254
+
 
 class RoleChoices(models.TextChoices):
     USER = 'user', 'Пользователь'
@@ -10,17 +16,16 @@ class RoleChoices(models.TextChoices):
 
 
 class User(AbstractUser):
-    USERNAME_MAX_LENGTH = 150
-
     username = models.CharField(
         'Имя пользователя',
-        max_length=150,
+        max_length=USERNAME_MAX_LENGTH,
         unique=True,
-        validators=[UnicodeUsernameValidator()],
+        validators=[UnicodeUsernameValidator(), validate_username_not_forbidden],
     )
     email = models.EmailField(
         'Электронная почта',
         unique=True,
+        max_length=EMAIL_MAX_LENGTH,
     )
     bio = models.TextField(
         'Биография',
@@ -29,7 +34,7 @@ class User(AbstractUser):
     )
     role = models.CharField(
         'Роль',
-        max_length=20,
+        max_length=ROLE_MAX_LENGTH,
         choices=RoleChoices.choices,
         default=RoleChoices.USER,
         help_text='Уровень доступа пользователя'
@@ -42,11 +47,10 @@ class User(AbstractUser):
 
     @property
     def is_admin(self):
-        """Администратор по роли, staff или superuser."""
+        """Администратор по роли или superuser."""
         return (
             self.role == RoleChoices.ADMIN
             or self.is_superuser
-            or self.is_staff
         )
 
     @property

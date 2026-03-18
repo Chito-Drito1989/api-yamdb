@@ -43,10 +43,10 @@ python manage.py migrate
 Запустите проект:
 
 python manage.py runserver
-Наполнение базы данных:
 
+Наполнение базы данных (импорт из CSV):
 
-python manage.py
+python manage.py import_csv
 
 Документация API
 После запуска проекта документация API доступна по адресу:

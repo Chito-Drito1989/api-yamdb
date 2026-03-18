@@ -1,9 +1,10 @@
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.auth.validators import UnicodeUsernameValidator
+from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
 from reviews.models import Category, Genre, Title, Review, Comment
-from users.models import User
+from users.models import User, USERNAME_MAX_LENGTH, EMAIL_MAX_LENGTH
 from users.validators import validate_username_not_forbidden
 
 
@@ -14,14 +15,17 @@ class SignUpSerializer(serializers.Serializer):
     """
 
     username = serializers.CharField(
-        max_length=User.USERNAME_MAX_LENGTH,
+        max_length=USERNAME_MAX_LENGTH,
         required=True,
         validators=[
             UnicodeUsernameValidator(),
             validate_username_not_forbidden,
         ],
     )
-    email = serializers.EmailField(required=True, max_length=254)
+    email = serializers.EmailField(
+        required=True,
+        max_length=EMAIL_MAX_LENGTH,
+    )
 
     def validate(self, data):
         user_by_email = User.objects.filter(email=data['email']).first()
@@ -40,7 +44,7 @@ class SignUpSerializer(serializers.Serializer):
 
 class TokenSerializer(serializers.Serializer):
     username = serializers.CharField(
-        max_length=User.USERNAME_MAX_LENGTH,
+        max_length=USERNAME_MAX_LENGTH,
         required=True,
         validators=[
             UnicodeUsernameValidator(),
@@ -50,7 +54,6 @@ class TokenSerializer(serializers.Serializer):
     confirmation_code = serializers.CharField(required=True)
 
     def validate(self, data):
-        from django.shortcuts import get_object_or_404
         user = get_object_or_404(User, username=data['username'])
         if not default_token_generator.check_token(
             user, data['confirmation_code']
@@ -88,7 +91,8 @@ class TitleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Title
         fields = (
-            'id', 'name', 'year', 'rating', 'description', 'genre', 'category',
+            'id', 'name', 'year', 'rating', 'description',
+            'genre', 'category',
         )
 
 
@@ -129,12 +133,14 @@ class ReviewSerializer(serializers.ModelSerializer):
     def validate(self, data):
         if self.context['request'].method != 'POST':
             return data
-        title = self.context.get('title')
+        view = self.context.get('view')
+        title_id = view.kwargs.get('title_id') if view else None
         user = self.context['request'].user
-        if title and Review.objects.filter(title=title, author=user).exists():
-            raise serializers.ValidationError(
-                'Вы уже оставили отзыв на это произведение.'
-            )
+        if title_id and user.is_authenticated:
+            if Review.objects.filter(title_id=title_id, author=user).exists():
+                raise serializers.ValidationError(
+                    'Вы уже оставили отзыв на это произведение.'
+                )
         return data
 
 
