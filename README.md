@@ -1,77 +1,87 @@
 # API YaMDb
 
-## Описание проекта
+Сервис отзывов на произведения (фильмы, книги, музыку). Запросы к API начинаются с префикса **`/api/v1/`**.
 
-Проект YaMDb собирает отзывы пользователей на произведения (фильмы, книги, музыку). Сами произведения в сервисе не хранятся — только метаданные, категории, жанры, оценки и текстовые отзывы с комментариями.
+Полная спецификация: откройте после запуска проекта **http://127.0.0.1:8000/redoc/** (описание схем, коды ответов, примеры тел запросов).
 
-## Стек технологий
+## Роли и права
 
-- Python 3.9+
-- Django 5.1
-- Django REST Framework 3.15
-- djangorestframework-simplejwt (JWT)
-- SQLite (по умолчанию)
+| Роль | Возможности |
+|------|-------------|
+| **Аноним** | Просмотр произведений, отзывов, комментариев |
+| **user** | Как аноним + отзывы и оценки (1 отзыв на произведение), комментарии, правка своих отзывов/комментариев |
+| **moderator** | Как user + правка и удаление любых отзывов и комментариев |
+| **admin** | Управление категориями, жанрами, произведениями, пользователями и ролями |
+| **Django superuser** | Права администратора |
 
-## Установка и запуск
+## Регистрация и JWT
+
+1. **POST** `/api/v1/auth/signup/` — тело: `email`, `username` (не `me`, пары email/username уникальны). Ответ **200**: `{ "email", "username" }`; код подтверждения уходит на почту (локально — в каталог `sent_emails/`).
+2. **POST** `/api/v1/auth/token/` — `username`, `confirmation_code`. Ответ **200**: `{ "token": "<JWT>" }`. **404**, если пользователь не найден; **400** при неверном коде или данных.
+3. Заголовок для защищённых методов: `Authorization: Bearer <token>`.
+4. **GET/PATCH** `/api/v1/users/me/` — свой профиль (роль через `/me/` не меняется).
+
+Пользователь, созданный админом через **POST** `/api/v1/users/`, письмо с кодом не получает; дальше он сам вызывает **signup** → **token**, как при обычной регистрации.
+
+## Основные эндпоинты (кратко)
+
+- **Категории:** `GET/POST /categories/`, `DELETE /categories/{slug}/` (список с `?search=`), детального GET нет.
+- **Жанры:** аналогично `/genres/`.
+- **Произведения:** `GET /titles/?category=&genre=&year=&name=`, CRUD по id для админа; в ответе `genre` — массив объектов `{name, slug}`, `category` — объект, `rating` — средняя оценка.
+- **Отзывы:** `/titles/{title_id}/reviews/` и `/titles/{title_id}/reviews/{review_id}/`.
+- **Комментарии:** `/titles/{title_id}/reviews/{review_id}/comments/` и `.../comments/{comment_id}/`.
+- **Пользователи (админ):** `/users/`, `/users/{username}/`.
+
+## Стек
+
+Python 3.9+, Django 5.1, DRF 3.15, SimpleJWT, SQLite.
+
+## Установка
 
 ```bash
-git clone <url-репозитория>
+git clone <url>
 cd api-yamdb/api_yamdb
 python -m venv venv
 # Windows: venv\Scripts\activate
-# Linux/macOS: source venv/bin/activate
 pip install -r ../requirements.txt
 python manage.py migrate
 python manage.py runserver
 ```
 
-Базовый URL API: `http://127.0.0.1:8000/api/v1/`
+## Импорт данных из CSV
 
-## Наполнение БД из CSV
+Файлы в **`api_yamdb/static/data/`**: `category.csv`, `genre.csv`, `users.csv`, `titles.csv`, `genre_title.csv`, `review.csv`, `comments.csv`.
 
-CSV-файлы размещаются в каталоге `api_yamdb/static/data/` (например: `category.csv`, `genre.csv`, `titles.csv` и т.д.).
-
-После миграций выполните:
+Порядок загрузки в команде: категории → жанры → пользователи → произведения → связи жанр–произведение → отзывы → комментарии.
 
 ```bash
 python manage.py import_csv
 ```
 
-Команда импортирует данные из указанных файлов в соответствующие модели.
+У пользователей из CSV выставляется ненастраиваемый пароль; для входа в API они проходят `/auth/signup/` и `/auth/token/`, как в ТЗ.
 
-## Документация API
+## Каскадное удаление (как в ТЗ)
 
-После запуска сервера: **http://127.0.0.1:8000/redoc/**
+| Удаляется | Поведение |
+|-----------|-----------|
+| **User** | Каскадом удаляются все его **Review** и **Comment** (`on_delete=CASCADE`). |
+| **Title** | Удаляются все **Review** к произведению и **Comment** к этим отзывам. |
+| **Review** | Удаляются все **Comment** к отзыву. |
+| **Category** | Произведения **не** удаляются; у них `category` становится `NULL` (`SET_NULL`). |
+| **Genre** | Произведения **не** удаляются; снимается только связь M2M. |
 
-## Примеры запросов
+## Примеры
 
-**Регистрация**
-
-`POST /api/v1/auth/signup/`
-
-```json
+```http
+POST /api/v1/auth/signup/
 {"email": "user@example.com", "username": "user1"}
+
+POST /api/v1/auth/token/
+{"username": "user1", "confirmation_code": "<из письма>"}
+
+GET /api/v1/titles/?category=films&year=2020
 ```
-
-Ответ `200`: в письме (папка `sent_emails/`) — код подтверждения.
-
-**Получение JWT**
-
-`POST /api/v1/auth/token/`
-
-```json
-{"username": "user1", "confirmation_code": "<код из письма>"}
-```
-
-Ответ: `{"token": "eyJ..."}`
-
-**Список произведений с фильтрами**
-
-`GET /api/v1/titles/?category=movies&genre=drama&year=2020&name=книга`
 
 ## Авторство
 
-Проект выполнен в рамках учебного курса.
-
-- Тимлид: Nazar Tomaily
-- Разработчики: Илья Абакунчик (User, Auth), Вадим Гусейнов (Titles, Categories, Genres), Nazar Tomaily (Reviews, Comments, Rating)
+Учебный проект. Команда: Nazar Tomaily, Илья Абакунчик, Вадим Гусейнов.

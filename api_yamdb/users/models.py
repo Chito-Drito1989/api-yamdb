@@ -49,7 +49,10 @@ class User(AbstractUser):
 
     @property
     def is_admin(self):
-        """Администратор по роли или superuser."""
+        """
+        Права администратора: роль admin или флаг superuser.
+        Суперпользователь остаётся админом даже при смене поля role.
+        """
         return (
             self.role == RoleChoices.ADMIN
             or self.is_superuser

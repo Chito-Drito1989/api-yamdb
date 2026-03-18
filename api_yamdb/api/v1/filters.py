@@ -19,6 +19,11 @@ class TitleFilter(filters.BaseFilterBackend):
             value = request.query_params.get(param)
             if value is None or value == '':
                 continue
+            if param == 'year':
+                try:
+                    value = int(value)
+                except (TypeError, ValueError):
+                    continue
             if kind == 'exact':
                 queryset = queryset.filter(**{lookup: value})
             else:

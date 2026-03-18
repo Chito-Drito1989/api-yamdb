@@ -4,11 +4,11 @@ from django.views.generic import TemplateView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    # Все запросы к API: /api/v1/... (см. документацию YaMDb API)
     path('api/', include('api.urls')),
     path(
         'redoc/',
         TemplateView.as_view(template_name='redoc.html'),
         name='redoc'
     ),
-    path('api/v1/', include('api.urls')),
 ]
