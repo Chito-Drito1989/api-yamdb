@@ -1,31 +1,46 @@
-from rest_framework import filters
+try:
+    import django_filters
+except ModuleNotFoundError:  # pragma: no cover - fallback for offline envs
+    django_filters = None
+
+from reviews.models import Title
 
 
-class TitleFilter(filters.BaseFilterBackend):
-    """
-    Кастомный фильтр произведений.
-    Поля query-параметров: category, genre, year, name.
-    """
+if django_filters:
+    class TitleFilter(django_filters.FilterSet):
+        """Фильтр произведений по category, genre, year и name."""
 
-    FILTER_PARAM_TO_LOOKUP = {
-        'category': ('category__slug', 'exact'),
-        'genre': ('genre__slug', 'exact'),
-        'year': ('year', 'exact'),
-        'name': ('name', 'icontains'),
-    }
+        category = django_filters.CharFilter(field_name='category__slug')
+        genre = django_filters.CharFilter(field_name='genre__slug')
+        year = django_filters.NumberFilter(field_name='year')
+        name = django_filters.CharFilter(
+            field_name='name',
+            lookup_expr='icontains',
+        )
 
-    def filter_queryset(self, request, queryset, view):
-        for param, (lookup, kind) in self.FILTER_PARAM_TO_LOOKUP.items():
-            value = request.query_params.get(param)
-            if value is None or value == '':
-                continue
-            if param == 'year':
+        class Meta:
+            model = Title
+            fields = ('category', 'genre', 'year', 'name')
+else:
+    class TitleFilter:
+        """Fallback-фильтр, если пакет django-filter недоступен."""
+
+        @staticmethod
+        def apply(params, queryset):
+            category = params.get('category')
+            genre = params.get('genre')
+            year = params.get('year')
+            name = params.get('name')
+
+            if category:
+                queryset = queryset.filter(category__slug=category)
+            if genre:
+                queryset = queryset.filter(genre__slug=genre)
+            if year:
                 try:
-                    value = int(value)
+                    queryset = queryset.filter(year=int(year))
                 except (TypeError, ValueError):
-                    continue
-            if kind == 'exact':
-                queryset = queryset.filter(**{lookup: value})
-            else:
-                queryset = queryset.filter(**{f'{lookup}__icontains': value})
-        return queryset.distinct()
+                    pass
+            if name:
+                queryset = queryset.filter(name__icontains=name)
+            return queryset.distinct()

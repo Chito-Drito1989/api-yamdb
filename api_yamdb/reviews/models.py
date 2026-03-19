@@ -5,7 +5,6 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.core.exceptions import ValidationError
 
 NAME_MAX_LENGTH = 256
-SLUG_MAX_LENGTH = 50
 SCORE_MIN = 1
 SCORE_MAX = 10
 
@@ -23,9 +22,7 @@ class Category(models.Model):
     name = models.CharField(
         max_length=NAME_MAX_LENGTH, verbose_name='Наименование'
     )
-    slug = models.SlugField(
-        unique=True, max_length=SLUG_MAX_LENGTH, verbose_name='Слаг'
-    )
+    slug = models.SlugField(unique=True, verbose_name='Слаг')
 
     class Meta:
         verbose_name = 'Категория'
@@ -42,9 +39,7 @@ class Genre(models.Model):
     name = models.CharField(
         max_length=NAME_MAX_LENGTH, verbose_name='Наименование'
     )
-    slug = models.SlugField(
-        unique=True, max_length=SLUG_MAX_LENGTH, verbose_name='Слаг'
-    )
+    slug = models.SlugField(unique=True, verbose_name='Слаг')
 
     class Meta:
         verbose_name = 'Жанр'
