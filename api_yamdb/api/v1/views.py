@@ -3,7 +3,8 @@ from django.core.mail import send_mail
 from django.db.models import Avg
 from django.db.models.functions import Round
 from django.shortcuts import get_object_or_404
-from rest_framework import status, permissions, viewsets, filters
+from rest_framework import filters, mixins, permissions, status, viewsets
+from rest_framework.filters import BaseFilterBackend
 from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -30,6 +31,20 @@ from .serializers import (
     ReviewSerializer,
     CommentSerializer,
 )
+
+try:
+    from django_filters.rest_framework import DjangoFilterBackend
+except ModuleNotFoundError:  # pragma: no cover - fallback for offline envs
+    class DjangoFilterBackend(BaseFilterBackend):
+        """Совместимость, если django-filter не установлен локально."""
+
+        def filter_queryset(self, request, queryset, view):
+            if hasattr(view, 'filterset_class'):
+                return view.filterset_class.apply(
+                    request.query_params,
+                    queryset,
+                )
+            return queryset
 
 
 @api_view(['POST'])
@@ -94,7 +109,12 @@ class UserViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class CategoryViewSet(viewsets.ModelViewSet):
+class CategoryViewSet(
+    mixins.ListModelMixin,
+    mixins.CreateModelMixin,
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet,
+):
     queryset = Category.objects.all().order_by('id')
     serializer_class = CategorySerializer
     permission_classes = (IsAdminOrReadOnly,)
@@ -104,11 +124,13 @@ class CategoryViewSet(viewsets.ModelViewSet):
     search_fields = ('name',)
     http_method_names = ['get', 'post', 'delete', 'head', 'options']
 
-    def retrieve(self, request, *args, **kwargs):
-        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
-
-class GenreViewSet(viewsets.ModelViewSet):
+class GenreViewSet(
+    mixins.ListModelMixin,
+    mixins.CreateModelMixin,
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet,
+):
     queryset = Genre.objects.all().order_by('id')
     serializer_class = GenreSerializer
     permission_classes = (IsAdminOrReadOnly,)
@@ -118,13 +140,11 @@ class GenreViewSet(viewsets.ModelViewSet):
     search_fields = ('name',)
     http_method_names = ['get', 'post', 'delete', 'head', 'options']
 
-    def retrieve(self, request, *args, **kwargs):
-        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
 
 class TitleViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAdminOrReadOnly,)
-    filter_backends = (TitleFilter, filters.SearchFilter)
+    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
+    filterset_class = TitleFilter
     search_fields = ('name',)
     http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
     queryset = Title.objects.all().order_by('id').annotate(
