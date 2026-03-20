@@ -3,8 +3,8 @@ from django.core.mail import send_mail
 from django.db.models import Avg
 from django.db.models.functions import Round
 from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, mixins, permissions, status, viewsets
-from rest_framework.filters import BaseFilterBackend
 from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -31,20 +31,6 @@ from .serializers import (
     ReviewSerializer,
     CommentSerializer,
 )
-
-try:
-    from django_filters.rest_framework import DjangoFilterBackend
-except ModuleNotFoundError:  # pragma: no cover - fallback for offline envs
-    class DjangoFilterBackend(BaseFilterBackend):
-        """Совместимость, если django-filter не установлен локально."""
-
-        def filter_queryset(self, request, queryset, view):
-            if hasattr(view, 'filterset_class'):
-                return view.filterset_class.apply(
-                    request.query_params,
-                    queryset,
-                )
-            return queryset
 
 
 @api_view(['POST'])
@@ -143,9 +129,8 @@ class GenreViewSet(
 
 class TitleViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAdminOrReadOnly,)
-    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
+    filter_backends = (DjangoFilterBackend,)
     filterset_class = TitleFilter
-    search_fields = ('name',)
     http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
     queryset = Title.objects.all().order_by('id').annotate(
         rating=Round(Avg('reviews__score')),
@@ -156,13 +141,40 @@ class TitleViewSet(viewsets.ModelViewSet):
             return TitleCreateUpdateSerializer
         return TitleSerializer
 
+    def _title_response(self, instance, status_code=status.HTTP_200_OK):
+        title = self.queryset.get(pk=instance.pk)
+        serializer = TitleSerializer(
+            title,
+            context=self.get_serializer_context(),
+        )
+        return Response(serializer.data, status=status_code)
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.save()
+        return self._title_response(
+            instance,
+            status_code=status.HTTP_201_CREATED,
+        )
+
+    def partial_update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(
+            instance,
+            data=request.data,
+            partial=True,
+        )
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.save()
+        return self._title_response(instance)
+
 
 class ReviewViewSet(viewsets.ModelViewSet):
     """Отзывы по произведению."""
     serializer_class = ReviewSerializer
     permission_classes = (IsAuthorOrModeratorOrAdminOrReadOnly,)
     http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
-    lookup_url_kwarg = 'review_id'
 
     def get_title(self):
         return get_object_or_404(Title, pk=self.kwargs['title_id'])
@@ -179,7 +191,6 @@ class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
     permission_classes = (IsAuthorOrModeratorOrAdminOrReadOnly,)
     http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
-    lookup_url_kwarg = 'comment_id'
 
     def get_review(self):
         return get_object_or_404(
