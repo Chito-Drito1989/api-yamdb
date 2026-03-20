@@ -112,6 +112,20 @@ class TitleCreateUpdateSerializer(serializers.ModelSerializer):
         model = Title
         fields = ('id', 'name', 'year', 'description', 'genre', 'category')
 
+    def to_representation(self, instance):
+        """
+        Полный формат как в ТЗ.
+
+        Рейтинг считается в queryset (через annotate в TitleViewSet), а
+        здесь мы только берём готовое значение.
+        """
+        view = self.context.get('view')
+        if view is not None and hasattr(view, 'queryset'):
+            title = view.queryset.get(pk=instance.pk)
+        else:
+            title = instance
+        return TitleSerializer(title, context=self.context).data
+
 
 class ReviewSerializer(serializers.ModelSerializer):
     """Сериализатор отзыва: текст, оценка 1–10, автор (read_only)."""
