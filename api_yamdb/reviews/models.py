@@ -1,8 +1,9 @@
 import datetime as dt
+
 from django.conf import settings
-from django.db import models
-from django.core.validators import MinValueValidator, MaxValueValidator
 from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator, MaxValueValidator
+from django.db import models
 
 NAME_MAX_LENGTH = 256
 SCORE_MIN = 1
